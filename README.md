@@ -56,19 +56,20 @@ Pengguna dapat membuat, melihat, mengubah, dan menghapus postingan blog dengan v
 ## Teknologi
 - PHP 8.2+ dan Laravel 11 / 12
 - Composer
-- MySQL atau SQLite
+- SQLite (default) atau MySQL
 - Blade Templating
 - Bootstrap 5 (via CDN)
 
 ## Struktur File
 
-Folder `blog/` berisi file yang dibuat/diubah di atas proyek Laravel bawaan:
+Repository ini berisi proyek Laravel lengkap. File yang dibuat/diubah untuk tugas ini:
 
 ```
-blog/
+.
 ├── app/
 │   ├── Http/Controllers/PostController.php
-│   └── Models/Post.php
+│   ├── Models/Post.php
+│   └── Providers/AppServiceProvider.php      (pagination Bootstrap)
 ├── database/migrations/
 │   └── 2026_10_06_000001_create_posts_table.php
 ├── resources/views/
@@ -87,23 +88,46 @@ blog/
 
 ## Cara Instalasi
 
-**Prasyarat:** PHP 8.2+, Composer, dan database (MySQL via XAMPP/Laragon, atau SQLite).
+**Prasyarat:** PHP 8.2+, Composer, dan Git. Database memakai **SQLite** secara default, jadi tidak perlu menyalakan MySQL.
 
-### 1. Buat proyek Laravel baru
-Buka terminal di folder `www` (Laragon) atau `htdocs` (XAMPP):
-
+### 1. Clone repository
 ```bash
-composer create-project laravel/laravel blog
-cd blog
+git clone https://github.com/lipelr-1511/TugasWeb-P10-BlogCRUD.git
+cd TugasWeb-P10-BlogCRUD
 ```
 
-### 2. Salin file dari repo ini
-Salin seluruh isi folder `blog/` pada repo ini ke dalam proyek `blog` yang baru dibuat, lalu pilih **timpa** untuk file yang sudah ada (`routes/web.php`, `Post.php`, dll.).
+### 2. Install dependency
+```bash
+composer install
+```
 
-### 3. Atur database di `.env`
+### 3. Siapkan file environment
+```bash
+# Windows (PowerShell / CMD)
+copy .env.example .env
 
-**Opsi A — MySQL** (buat database kosong bernama `blog_db` lebih dulu, atau biarkan Laravel menawarkan pembuatannya):
+# macOS / Linux
+cp .env.example .env
+```
 
+Buat application key:
+```bash
+php artisan key:generate
+```
+
+### 4. Siapkan database
+
+**Opsi A — SQLite (default, disarankan).** Buat file database kosong:
+```bash
+# Windows (PowerShell)
+New-Item database\database.sqlite -ItemType File
+
+# macOS / Linux
+touch database/database.sqlite
+```
+Jika dilewati, Laravel akan menawarkan membuatnya otomatis saat `migrate` (ketik `yes`).
+
+**Opsi B — MySQL.** Buat database kosong `blog_db`, lalu ubah di `.env`:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -113,38 +137,11 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-**Opsi B — SQLite:** gunakan pengaturan bawaan Laravel 11/12 (tidak perlu mengubah apa pun).
-
-### 4. Aktifkan tampilan pagination Bootstrap
-Buka `app/Providers/AppServiceProvider.php`, lalu ubah menjadi:
-
-```php
-<?php
-
-namespace App\Providers;
-
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\ServiceProvider;
-
-class AppServiceProvider extends ServiceProvider
-{
-    public function register(): void
-    {
-        //
-    }
-
-    public function boot(): void
-    {
-        Paginator::useBootstrapFive();
-    }
-}
-```
-
 ### 5. Jalankan migration
 ```bash
 php artisan migrate
 ```
-Jika muncul pertanyaan pembuatan database (yes/no), ketik `yes` atau tekan Enter.
+Jika muncul pertanyaan yes/no, ketik `yes` atau tekan Enter. Hasil yang benar menampilkan `create_posts_table ... DONE`.
 
 ## Cara Menjalankan
 
@@ -153,6 +150,8 @@ php artisan serve
 ```
 
 Buka **http://127.0.0.1:8000** di browser. Halaman utama otomatis diarahkan ke `/posts`.
+
+> Biarkan terminal tetap terbuka selama aplikasi dipakai. Tekan `Ctrl + C` untuk menghentikan server.
 
 ## Cara Penggunaan
 
@@ -193,10 +192,15 @@ Hasil dari `Route::resource('posts', PostController::class)`. Lihat selengkapnya
 | Masalah | Solusi |
 |---|---|
 | `Base table or view not found: posts` | Jalankan `php artisan migrate`. |
-| `Access denied for user` / koneksi database gagal | Periksa `DB_*` di `.env` dan pastikan MySQL sudah menyala. |
-| Tombol pagination tampil besar/berantakan | Pastikan `Paginator::useBootstrapFive()` sudah ditambahkan (langkah 4). |
+| `Access denied for user` / koneksi database gagal | Hanya untuk MySQL: periksa `DB_*` di `.env` dan pastikan MySQL menyala. |
+| Tombol pagination tampil besar/berantakan | Pastikan `Paginator::useBootstrapFive()` ada di `app/Providers/AppServiceProvider.php`. |
 | Perubahan `.env` tidak terbaca | Jalankan `php artisan config:clear`. |
 | Halaman `419 Page Expired` | Pastikan form memiliki `@csrf`, lalu muat ulang halaman. |
 | Perubahan view tidak muncul | Jalankan `php artisan view:clear`. |
+| `Could not open input file: artisan` | Terminal belum berada di folder proyek. Jalankan `cd TugasWeb-P10-BlogCRUD`. |
+| `could not find driver` | Aktifkan ekstensi `pdo_sqlite` dan `sqlite3` di `php.ini`, lalu restart. |
+| `No application encryption key has been specified` | Jalankan `php artisan key:generate`. |
+| `vendor/autoload.php` tidak ditemukan | Jalankan `composer install`. |
+| Browser tidak bisa membuka `127.0.0.1:8000` | Pastikan `php artisan serve` masih berjalan di terminal. Jika port dipakai, gunakan `php artisan serve --port=8001`. |
 
 ---
